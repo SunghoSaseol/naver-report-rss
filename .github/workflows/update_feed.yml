@@ -1,0 +1,34 @@
+name: Update Naver Research RSS Feed
+
+on:
+  schedule:
+    # UTC 기준. KST = UTC+9
+    # 매일 KST 07:30, 12:30, 17:30, 21:30 에 실행 (원하는 시각으로 조정 가능)
+    - cron: "30 22,3,8,12 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 저장소 체크아웃
+        uses: actions/checkout@v4
+
+      - name: 파이썬 설치
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 패키지 설치
+        run: pip install requests beautifulsoup4 feedgen
+
+      - name: 스크래핑 및 RSS 생성
+        run: python scrape_reports.py
+
+      - name: 변경사항 커밋 및 푸시
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/
+          git diff --cached --quiet || git commit -m "Update RSS feeds ($(date -u +'%Y-%m-%d %H:%M UTC'))"
+          git push
